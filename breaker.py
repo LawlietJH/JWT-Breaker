@@ -1,6 +1,7 @@
 import base64
 import json
 import sys
+import time
 
 import jwt
 
@@ -71,8 +72,11 @@ def get_jwt(arguments: dict):
 if __name__ == '__main__':
     arguments = arguments_parser()
     JWT = get_jwt(arguments)
+    init = time.perf_counter()
     secret = breaker(JWT)
+    end = time.perf_counter() - init
     if not secret:
         print("\n [-] Secret Not Found!")
     else:
         print(f"\n [+] Secret: {repr(secret)}")
+    print(f"\n [+] Time: {round(end, 3)}s")
