@@ -70,7 +70,7 @@ def get_jwt(arguments: dict):
     JWT = arguments.get('JWT')
     filename = arguments.get('Filename')
     assert JWT, "\n El argumento JWT ['-jwt', '--jwt', '-t', '--token'] Es Necesario."
-    assert JWT, "\n El argumento Filename ['-f', '--file'] Es Necesario."
+    assert filename, "\n El argumento Filename ['-f', '--file'] Es Necesario."
     return JWT[1], filename[1]
 
 
