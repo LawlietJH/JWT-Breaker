@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import sys
 import time
 
@@ -14,7 +15,7 @@ def decode_b64(b64str) -> str:
     return json.loads(b64str)
 
 
-def breaker(encoded_jwt: str, verbose: bool = False) -> str:
+def breaker(encoded_jwt: str, filename: str, verbose: bool = False) -> str:
     # encoded_jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIifQ.p5LogGsW6l9h-xwx_QD8u61gpRTJnnQQvLl1dOVGQWQ"
 
     header_b64, payload_b64, signature_b64 = encoded_jwt.split('.')
@@ -29,7 +30,8 @@ def breaker(encoded_jwt: str, verbose: bool = False) -> str:
     # RFC 7518 - Alg List: https://tools.ietf.org/html/rfc7518#section-3
     algorithm = header.get('alg', '')
 
-    filename = 'common_secrets.txt'
+    assert os.path.exists(filename), \
+        f"\n No se encuentra el archivo: {filename}"
 
     with open(filename, 'r') as file:
         secrets = file.readlines()
@@ -58,25 +60,35 @@ def breaker(encoded_jwt: str, verbose: bool = False) -> str:
 
 def arguments_parser() -> str:
     arg_parser = ArgParser()
-    rules = {'pairs': {'JWT': ['-jwt', '--jwt', '-t', '--token']}}
+    rules = {'pairs': {'JWT': ['-jwt', '--jwt', '-t', '--token'],
+                       'Filename': ['-f', '--file']}}
     arguments, _ = arg_parser.parser(rules, sys.argv, wn=True)
     return arguments
 
 
 def get_jwt(arguments: dict):
     JWT = arguments.get('JWT')
-    assert JWT, "\n El argumento JWT Es Necesario."
-    return JWT[1]
+    filename = arguments.get('Filename')
+    assert JWT, "\n El argumento JWT ['-jwt', '--jwt', '-t', '--token'] Es Necesario."
+    assert JWT, "\n El argumento Filename ['-f', '--file'] Es Necesario."
+    return JWT[1], filename[1]
 
 
 if __name__ == '__main__':
     arguments = arguments_parser()
-    JWT = get_jwt(arguments)
+    JWT, filename = get_jwt(arguments)
     init = time.perf_counter()
-    secret = breaker(JWT)
+    secret = breaker(JWT, filename)
     end = time.perf_counter() - init
     if not secret:
         print("\n [-] Secret Not Found!")
     else:
         print(f"\n [+] Secret: {repr(secret)}")
     print(f"\n [+] Time: {round(end, 3)}s")
+
+    # Ejemplo de uso:
+    # > breaker.py -f common_secrets.txt -jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.7eMe1dyoNm0xNvZnT5asc7wo3uj412WPFukRKFfKjdk
+    #
+    # [+] Secret: 'YoUR sUpEr S3krEt 1337 HMAC kEy HeRE'
+    #
+    # [+] Time: 0.001s
