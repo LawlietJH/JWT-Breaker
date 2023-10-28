@@ -59,10 +59,10 @@ def breaker(encoded_jwt: str, filename: str, verbose: bool = False) -> str:
 
 
 def arguments_parser() -> str:
-    arg_parser = ArgParser()
     rules = {'pairs': {'JWT': ['-jwt', '--jwt', '-t', '--token'],
                        'Filename': ['-f', '--file']}}
-    arguments, _ = arg_parser.parser(rules, sys.argv, wn=True)
+    arg_parser = ArgParser(rules)
+    arguments = arg_parser.parser(sys.argv, keys=True)
     return arguments
 
 
